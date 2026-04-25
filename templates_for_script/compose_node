@@ -1,0 +1,51 @@
+services:
+  caddy:
+    image: caddy:2.9
+    container_name: caddy
+    restart: always
+    network_mode: host
+    volumes:
+      - ./caddy/data:/data
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy/templates:/srv
+      - ./subscriptions:/var/www/subscriptions:ro
+
+  marznode:
+    image: dawsh/marznode:latest
+    container_name: marznode
+    restart: always
+    network_mode: host
+    environment:
+      - SERVICE_ADDRESS=$NODE_SERVICE_ADDRESS
+      - SERVICE_PORT=$NODE_SERVICE_PORT
+      - INSECURE=$NODE_INSECURE
+      - SSL_CLIENT_CERT_FILE=/var/lib/marznode/client.pem
+      - SSL_KEY_FILE=/var/lib/marznode/server-key.pem
+      - SSL_CERT_FILE=/var/lib/marznode/server.pem
+      - XRAY_ENABLED=True
+      - XRAY_EXECUTABLE_PATH=/usr/local/bin/xray
+      - XRAY_ASSETS_PATH=/usr/local/lib/xray
+      - XRAY_CONFIG_PATH=/var/lib/marznode/xray_config.json
+      - XRAY_RESTART_ON_FAILURE=True
+      - XRAY_RESTART_ON_FAILURE_INTERVAL=5
+      - SING_BOX_ENABLED=False
+    volumes:
+      - ./marznode_data:/var/lib/marznode
+      - ./caddy/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/$NODE_DOMAIN:/certs:ro
+    depends_on:
+      caddy:
+        condition: service_started
+
+  bridge-server:
+    image: python:3.11-slim
+    container_name: bridge-server
+    restart: always
+    network_mode: host
+    volumes:
+      - ./subscriptions:/opt/marznode/subscriptions:ro
+      - ./bridge_server.py:/app/bridge_server.py:ro
+    working_dir: /app
+    command: >
+      sh -c "pip install flask && python bridge_server.py"
+    depends_on:
+      - caddy
