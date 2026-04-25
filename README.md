@@ -16,6 +16,10 @@ VLESS Reality panel with chain proxy (bridge) support for bypassing white lists.
 - **Custom Templates** - Support for custom landing page (place in `templates_for_script/custom/`)
 - **No Hysteria2** - Clean setup without UDP protocols
 
+## Related Projects
+
+- **[bridge-subscription-server](https://github.com/dimasavr2006/bridge-subscription-server)** — Python сервер для генерации подписок (используется этим скриптом автоматически)
+
 ## Installation
 
 ```bash
