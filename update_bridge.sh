@@ -99,23 +99,23 @@ fi
 echo ""
 echo_info "Updating bridge configuration..."
 
-# Determine script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Download latest generate_subscription.py
+DOWNLOAD_URL="https://raw.githubusercontent.com/dimasavr2006/bridge-subscription-server/main/generate_subscription.py"
+echo_info "Downloading latest subscription generator..."
+wget -qO generate_subscription.py "$DOWNLOAD_URL"
+chmod +x generate_subscription.py
 
 # Regenerate configs
-if [ -f "$SCRIPT_DIR/generate_subscription.py" ]; then
-  python3 "$SCRIPT_DIR/generate_subscription.py" \
-    --bridge-link "$bridge_link" \
-    --server-config "$SERVER_CONFIG" \
-    --domain "$DOMAIN" \
-    --output-dir "$INSTALL_DIR/subscriptions" \
-    --pbk "$PBK" \
-    --sid "$SID"
-else
-  echo_error "generate_subscription.py not found in $SCRIPT_DIR"
-  echo "Please run this script from the marzneshin-bridge-setup directory."
-  exit 1
-fi
+python3 generate_subscription.py \
+  --bridge-link "$bridge_link" \
+  --server-config "$SERVER_CONFIG" \
+  --domain "$DOMAIN" \
+  --output-dir "$INSTALL_DIR/subscriptions" \
+  --pbk "$PBK" \
+  --sid "$SID"
+
+# Cleanup
+rm -f generate_subscription.py
 
 echo_info "Bridge configuration updated!"
 

@@ -287,8 +287,11 @@ if [[ "$install_mode" == "2" ]]; then
       get_template "confluence_page" | envsubst > ./caddy/templates/index.html
     fi
     
-    # Copy bridge server script
-    cp "$SCRIPT_DIR/bridge_server.py" ./bridge_server.py
+    # Download bridge server scripts from bridge-subscription-server repo
+    echo "Downloading bridge subscription server..."
+    wget -qO bridge_server.py "https://raw.githubusercontent.com/dimasavr2006/bridge-subscription-server/main/bridge_server.py"
+    wget -qO generate_subscription.py "https://raw.githubusercontent.com/dimasavr2006/bridge-subscription-server/main/generate_subscription.py"
+    chmod +x generate_subscription.py
 
     echo "Marznode setup completed"
   }
@@ -298,7 +301,7 @@ if [[ "$install_mode" == "2" ]]; then
   # Generate bridge configs if enabled
   if [[ "$BRIDGE_ENABLED" == "True" ]]; then
     echo "Generating bridge subscription configs..."
-    python3 "$SCRIPT_DIR/generate_subscription.py" \
+    python3 generate_subscription.py \
       --bridge-link "$BRIDGE_LINK" \
       --server-config /opt/marznode/marznode_data/xray_config.json \
       --domain "$NODE_DOMAIN" \
@@ -611,8 +614,10 @@ marzneshin_setup() {
   mkdir -p marzneshin_data/templates/subscription
   get_template "subscription/index.html" > ./marzneshin_data/templates/subscription/index.html
   
-  # Copy bridge server script
-  cp "$SCRIPT_DIR/bridge_server.py" ./bridge_server.py
+  # Download bridge server scripts
+  wget -qO bridge_server.py "https://raw.githubusercontent.com/dimasavr2006/bridge-subscription-server/main/bridge_server.py"
+  wget -qO generate_subscription.py "https://raw.githubusercontent.com/dimasavr2006/bridge-subscription-server/main/generate_subscription.py"
+  chmod +x generate_subscription.py
 
   echo "Marzneshin setup completed"
 }
@@ -622,7 +627,7 @@ marzneshin_setup
 # Generate bridge configs if enabled
 if [[ "$BRIDGE_ENABLED" == "True" ]]; then
   echo "Generating bridge subscription configs..."
-  python3 "$SCRIPT_DIR/generate_subscription.py" \
+  python3 generate_subscription.py \
     --bridge-link "$BRIDGE_LINK" \
     --server-config /opt/marzneshin-vps-setup/marznode_data/xray_config.json \
     --domain "$VLESS_DOMAIN" \
