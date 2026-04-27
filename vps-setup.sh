@@ -681,10 +681,16 @@ end_script() {
   docker compose -f /opt/marzneshin-vps-setup/docker-compose.yml up -d caddy
 
   # Wait for certificates
-  echo "Waiting for certificates (max 120 seconds)..."
-  CERT_PATH="/opt/marzneshin-vps-setup/caddy/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory/$VLESS_DOMAIN/$VLESS_DOMAIN.crt"
-  for i in {1..24}; do
-    if [ -f "$CERT_PATH" ]; then
+  echo "Waiting for certificates (max 180 seconds)..."
+  DOMAIN_LOWER=$(echo "$VLESS_DOMAIN" | tr '[:upper:]' '[:lower:]')
+  CERT_DIR="/opt/marzneshin-vps-setup/caddy/data/caddy/certificates/acme-v02.api.letsencrypt.org-directory"
+  
+  for i in {1..36}; do
+    # Check multiple possible paths and extensions
+    if [ -f "$CERT_DIR/$DOMAIN_LOWER/$DOMAIN_LOWER.crt" ] || \
+       [ -f "$CERT_DIR/$DOMAIN_LOWER/$DOMAIN_LOWER.pem" ] || \
+       [ -f "$CERT_DIR/$VLESS_DOMAIN/$VLESS_DOMAIN.crt" ] || \
+       [ -f "$CERT_DIR/$VLESS_DOMAIN/$VLESS_DOMAIN.pem" ]; then
       echo "Certificate obtained"
       break
     fi
@@ -692,9 +698,16 @@ end_script() {
     sleep 5
   done
 
-  if [ ! -f "$CERT_PATH" ]; then
-    echo "Warning: Certificate not found after 120s."
+  # Verify certificate exists
+  if [ ! -f "$CERT_DIR/$DOMAIN_LOWER/$DOMAIN_LOWER.crt" ] && \
+     [ ! -f "$CERT_DIR/$DOMAIN_LOWER/$DOMAIN_LOWER.pem" ] && \
+     [ ! -f "$CERT_DIR/$VLESS_DOMAIN/$VLESS_DOMAIN.crt" ] && \
+     [ ! -f "$CERT_DIR/$VLESS_DOMAIN/$VLESS_DOMAIN.pem" ]; then
+    echo "Warning: Certificate not found after 180s."
     echo "Check Caddy logs: docker logs caddy"
+    echo "Attempting to restart Caddy for certificate acquisition..."
+    docker compose -f /opt/marzneshin-vps-setup/docker-compose.yml restart caddy
+    sleep 10
   fi
 
   # Start remaining containers
