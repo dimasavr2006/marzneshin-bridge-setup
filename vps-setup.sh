@@ -268,23 +268,23 @@ if [[ "$install_mode" == "2" ]]; then
     mkdir -p marznode_data caddy/templates subscriptions
 
     # Process templates
-    get_template "compose_node" | envsubst > ./docker-compose.yml
-    get_template "xray_node" | envsubst > ./marznode_data/xray_config.json
+    get_template "compose_node" | envsubst | tr -d '\r' > ./docker-compose.yml
+    get_template "xray_node" | envsubst | tr -d '\r' > ./marznode_data/xray_config.json
 
     # Add XHTTP inbound if enabled
     if [[ "$XHTTP_ENABLED" == "True" ]]; then
-      XHTTP_INBOUND=$(get_template "xray_node_xhttp_inbound" | envsubst)
+      XHTTP_INBOUND=$(get_template "xray_node_xhttp_inbound" | envsubst | tr -d '\r')
       jq --argjson inbound "$XHTTP_INBOUND" '.inbounds += [$inbound]' ./marznode_data/xray_config.json > ./marznode_data/xray_config.json.tmp
       mv ./marznode_data/xray_config.json.tmp ./marznode_data/xray_config.json
     fi
 
-    get_template "caddy_node" | envsubst > ./caddy/Caddyfile
+    get_template "caddy_node" | envsubst | tr -d '\r' > ./caddy/Caddyfile
     
     # Setup custom templates or default confluence
     if [ -d "$SCRIPT_DIR/templates_for_script/custom" ] && [ "$(ls -A $SCRIPT_DIR/templates_for_script/custom)" ]; then
       cp -r "$SCRIPT_DIR/templates_for_script/custom/"* ./caddy/templates/
     else
-      get_template "confluence_page" | envsubst > ./caddy/templates/index.html
+      get_template "confluence_page" | envsubst | tr -d '\r' > ./caddy/templates/index.html
     fi
     
     echo "Marznode setup completed"
@@ -570,54 +570,34 @@ marzneshin_setup() {
   mkdir -p marzneshin marzneshin_data marznode_data caddy/templates subscriptions
 
   # Process templates
-  get_template "compose" | envsubst > ./docker-compose.yml
-  get_template "marzneshin" | envsubst > ./marzneshin/.env
-  get_template "xray" | envsubst > ./marznode_data/xray_config.json
+  get_template "compose" | envsubst | tr -d '\r' > ./docker-compose.yml
+  get_template "marzneshin" | envsubst | tr -d '\r' > ./marzneshin/.env
+  get_template "xray" | envsubst | tr -d '\r' > ./marznode_data/xray_config.json
 
   # Add XHTTP inbound if enabled
   if [[ "$XHTTP_ENABLED" == "True" ]]; then
-    XHTTP_INBOUND=$(get_template "xray_xhttp_inbound" | envsubst)
+    XHTTP_INBOUND=$(get_template "xray_xhttp_inbound" | envsubst | tr -d '\r')
     jq --argjson inbound "$XHTTP_INBOUND" '.inbounds += [$inbound]' ./marznode_data/xray_config.json > ./marznode_data/xray_config.json.tmp
     mv ./marznode_data/xray_config.json.tmp ./marznode_data/xray_config.json
   fi
 
-  get_template "caddy" | envsubst > ./caddy/Caddyfile
-  
+  get_template "caddy" | envsubst | tr -d '\r' > ./caddy/Caddyfile
+
   # Setup custom templates or default confluence
   if [ -d "$SCRIPT_DIR/templates_for_script/custom" ] && [ "$(ls -A $SCRIPT_DIR/templates_for_script/custom)" ]; then
     cp -r "$SCRIPT_DIR/templates_for_script/custom/"* ./caddy/templates/
   else
-    get_template "confluence_page" | envsubst > ./caddy/templates/index.html
+    get_template "confluence_page" | envsubst | tr -d '\r' > ./caddy/templates/index.html
   fi
 
   # Create templates directory for marzneshin
   mkdir -p marzneshin_data/templates/home
   cp ./caddy/templates/index.html ./marzneshin_data/templates/home/index.html
-  
-  # Copy subscription template
-  mkdir -p marzneshin_data/templates/subscription
-  get_template "subscription/index.html" > ./marzneshin_data/templates/subscription/index.html
-  
-  # Note: Bridge/subscription logic is now built into marzneshin-aggregator
-  # Use the Proxy Pool page in dashboard after installation
 
   echo "Marzneshin setup completed"
 }
 
 marzneshin_setup
-
-# Generate bridge configs if enabled
-if [[ "$BRIDGE_ENABLED" == "True" ]]; then
-  echo "Generating bridge subscription configs..."
-  python3 generate_subscription.py \
-    --bridge-link "$BRIDGE_LINK" \
-    --server-config /opt/marzneshin-vps-setup/marznode_data/xray_config.json \
-    --domain "$VLESS_DOMAIN" \
-    --output-dir /opt/marzneshin-vps-setup/subscriptions \
-    --pbk "$XRAY_PBK" \
-    --sid "$XRAY_SID"
-  echo "Bridge configs generated in /opt/marzneshin-vps-setup/subscriptions/"
-fi
 
 sshd_edit() {
   grep -r Port /etc/ssh -l | xargs -n 1 sed -i -e "/Port /c\Port $SSH_PORT"
