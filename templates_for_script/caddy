@@ -1,8 +1,20 @@
-$VLESS_DOMAIN {
-        bind 0.0.0.0
+{
+        https_port 4123
+        default_bind 127.0.0.1
+        servers {
+                listener_wrappers {
+                        proxy_protocol {
+                                allow 127.0.0.1/32
+                        }
+                        tls
+                }
+        }
+        auto_https disable_redirects
+}
+https://$VLESS_DOMAIN {
         reverse_proxy * 127.0.0.1:8000
 
-        header {
+        header  {
                 -Server
         }
         handle_errors {
@@ -11,3 +23,28 @@ $VLESS_DOMAIN {
                 }
         }
 }
+http://$VLESS_DOMAIN {
+        bind 0.0.0.0
+        redir https://$VLESS_DOMAIN{uri} permanent
+
+        header {
+                -Server
+        }
+
+        handle_errors {
+                header {
+                        -Server
+                }
+        }
+}
+:4123 {
+        tls internal
+        respond 204
+}
+:80 {
+        bind 0.0.0.0
+        respond 204
+}
+
+# Note: Bridge subscription is now handled by Marzneshin Aggregator internally
+# All subscription endpoints are served via reverse_proxy to port 8000 above
