@@ -10,7 +10,7 @@ services:
       - ./caddy/templates:/srv
 
   marzneshin:
-    image: dimasavr/marzneshin-aggregator:v1.0
+    image: dimasavr/marzneshin-aggregator:main
     container_name: marzneshin
     restart: always
     network_mode: host
