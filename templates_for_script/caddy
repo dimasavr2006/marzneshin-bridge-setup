@@ -46,11 +46,5 @@ http://$VLESS_DOMAIN {
         respond 204
 }
 
-# Bridge subscription endpoint
-https://$VLESS_DOMAIN/sub/bridge/* {
-        reverse_proxy 127.0.0.1:8080
-        header {
-                -Server
-                Access-Control-Allow-Origin *
-        }
-}
+# Note: Bridge subscription is now handled by Marzneshin Aggregator internally
+# All subscription endpoints are served via reverse_proxy to port 8000 above
