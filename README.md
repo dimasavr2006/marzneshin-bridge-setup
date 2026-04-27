@@ -26,7 +26,7 @@ VLESS Reality panel with integrated Proxy Aggregator (bridge + external VPN supp
 ## Installation
 
 ```bash
-bash <(wget -qO- https://raw.githubusercontent.com/dimasavr2006/marzneshin-bridge-setup/main/vps-setup.sh)
+bash <(wget -qO- https://raw.githubusercontent.com/dimasavr2006/marzneshin-bridge-setup/master/vps-setup.sh)
 ```
 
 ## Installation Modes
