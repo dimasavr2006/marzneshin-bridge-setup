@@ -43,3 +43,19 @@ services:
     depends_on:
       caddy:
         condition: service_started
+
+  bridge-server:
+    image: python:3.11-slim
+    container_name: bridge-server
+    restart: always
+    network_mode: host
+    environment:
+      - BRIDGE_LINK=$BRIDGE_LINK
+    volumes:
+      - ./subscriptions:/opt/marznode/subscriptions:ro
+      - ./bridge_server.py:/app/bridge_server.py:ro
+    working_dir: /app
+    command: >
+      sh -c "pip install flask && python bridge_server.py"
+    depends_on:
+      - caddy
