@@ -287,29 +287,13 @@ if [[ "$install_mode" == "2" ]]; then
       get_template "confluence_page" | envsubst > ./caddy/templates/index.html
     fi
     
-    # Download bridge server scripts from bridge-subscription-server repo
-    echo "Downloading bridge subscription server..."
-    wget -qO bridge_server.py "https://raw.githubusercontent.com/dimasavr2006/bridge-subscription-server/main/bridge_server.py"
-    wget -qO generate_subscription.py "https://raw.githubusercontent.com/dimasavr2006/bridge-subscription-server/main/generate_subscription.py"
-    chmod +x generate_subscription.py
-
     echo "Marznode setup completed"
   }
 
   marznode_setup
 
-  # Generate bridge configs if enabled
-  if [[ "$BRIDGE_ENABLED" == "True" ]]; then
-    echo "Generating bridge subscription configs..."
-    python3 generate_subscription.py \
-      --bridge-link "$BRIDGE_LINK" \
-      --server-config /opt/marznode/marznode_data/xray_config.json \
-      --domain "$NODE_DOMAIN" \
-      --output-dir /opt/marznode/subscriptions \
-      --pbk "$XRAY_PBK" \
-      --sid "$XRAY_SID"
-    echo "Bridge configs generated in /opt/marznode/subscriptions/"
-  fi
+  # Note: Bridge configuration is now managed via Marzneshin Aggregator UI
+  # After installation, go to Dashboard -> Proxy Pool to add bridge servers
 
   # SSH configuration
   sshd_edit() {
@@ -614,10 +598,8 @@ marzneshin_setup() {
   mkdir -p marzneshin_data/templates/subscription
   get_template "subscription/index.html" > ./marzneshin_data/templates/subscription/index.html
   
-  # Download bridge server scripts
-  wget -qO bridge_server.py "https://raw.githubusercontent.com/dimasavr2006/bridge-subscription-server/main/bridge_server.py"
-  wget -qO generate_subscription.py "https://raw.githubusercontent.com/dimasavr2006/bridge-subscription-server/main/generate_subscription.py"
-  chmod +x generate_subscription.py
+  # Note: Bridge/subscription logic is now built into marzneshin-aggregator
+  # Use the Proxy Pool page in dashboard after installation
 
   echo "Marzneshin setup completed"
 }

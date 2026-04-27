@@ -8,10 +8,9 @@ services:
       - ./caddy/data:/data
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - ./caddy/templates:/srv
-      - ./subscriptions:/var/www/subscriptions:ro
 
   marzneshin:
-    image: dawsh/marzneshin:latest
+    image: dimasavr2006/marzneshin-aggregator:latest
     container_name: marzneshin
     restart: always
     network_mode: host
@@ -44,17 +43,3 @@ services:
     depends_on:
       caddy:
         condition: service_started
-
-  bridge-server:
-    image: python:3.11-slim
-    container_name: bridge-server
-    restart: always
-    network_mode: host
-    volumes:
-      - ./subscriptions:/opt/marzneshin-vps-setup/subscriptions:ro
-      - ./bridge_server.py:/app/bridge_server.py:ro
-    working_dir: /app
-    command: >
-      sh -c "pip install flask && python bridge_server.py"
-    depends_on:
-      - caddy
