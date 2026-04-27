@@ -11,7 +11,7 @@ if [ -d "$TEMPLATES_DIR" ]; then
   USE_LOCAL=true
 else
   USE_LOCAL=false
-  export GIT_BRANCH="main"
+  export GIT_BRANCH="master"
   export GIT_REPO="dimasavr2006/marzneshin-bridge-setup"
 fi
 
@@ -593,6 +593,10 @@ marzneshin_setup() {
   # Create templates directory for marzneshin
   mkdir -p marzneshin_data/templates/home
   cp ./caddy/templates/index.html ./marzneshin_data/templates/home/index.html
+  
+  # Copy subscription template
+  mkdir -p marzneshin_data/templates/subscription
+  get_template "subscription/index.html" | tr -d '\r' > ./marzneshin_data/templates/subscription/index.html
 
   echo "Marzneshin setup completed"
 }
