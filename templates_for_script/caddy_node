@@ -1,58 +1,18 @@
 {
-	https_port 4123
-	servers {
-		listener_wrappers {
-			proxy_protocol {
-				allow 127.0.0.1/32
-			}
-			tls
-		}
-	}
-	auto_https disable_redirects
+    email your-email@example.com
 }
 
-https://$NODE_DOMAIN {
-	bind 127.0.0.1
-	root * /srv
-	file_server
-	header {
-		-Server
-	}
-	handle_errors {
-		header {
-			-Server
-		}
-	}
-}
+$NODE_DOMAIN {
+    root * /srv
+    file_server
 
-http://$NODE_DOMAIN {
-	bind 0.0.0.0
-	redir https://$NODE_DOMAIN{uri} permanent
-	header {
-		-Server
-	}
-	handle_errors {
-		header {
-			-Server
-		}
-	}
-}
+    header {
+        -Server
+    }
 
-:4123 {
-	tls internal
-	respond 204
-}
-
-:80 {
-	bind 0.0.0.0
-	respond 204
-}
-
-# Bridge subscription endpoint
-https://$NODE_DOMAIN/sub/bridge/* {
-	reverse_proxy 127.0.0.1:8080
-	header {
-		-Server
-		Access-Control-Allow-Origin *
-	}
+    handle_errors {
+        header {
+            -Server
+        }
+    }
 }
