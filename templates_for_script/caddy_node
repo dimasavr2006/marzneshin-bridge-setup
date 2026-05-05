@@ -1,18 +1,18 @@
 {
-    email your-email@example.com
+	email your-email@example.com
 }
 
 $NODE_DOMAIN {
-    root * /srv
-    file_server
+	root * /srv
+	file_server
 
-    header {
-        -Server
-    }
+	header {
+		-Server
+	}
 
-    handle_errors {
-        header {
-            -Server
-        }
-    }
+	handle_errors {
+		header {
+			-Server
+		}
+	}
 }

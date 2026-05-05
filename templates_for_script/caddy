@@ -1,17 +1,24 @@
 {
-    email your-email@example.com
+	email your-email@example.com
 }
 
 $VLESS_DOMAIN {
-    reverse_proxy * 127.0.0.1:8000
+	# API requests that don't start with /api/ need rewriting
+	@needs_api {
+		path /admins* /users* /nodes* /services* /inbounds* /system* /sub* /proxy-pool* /settings*
+		not path /api/*
+	}
+	rewrite @needs_api /api{uri}
 
-    header {
-        -Server
-    }
+	reverse_proxy * 127.0.0.1:8000
 
-    handle_errors {
-        header {
-            -Server
-        }
-    }
+	header {
+		-Server
+	}
+
+	handle_errors {
+		header {
+			-Server
+		}
+	}
 }
