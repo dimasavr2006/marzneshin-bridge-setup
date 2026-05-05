@@ -420,8 +420,7 @@ if [[ "$install_mode" == "2" ]]; then
   fi
 
   if [[ "$BRIDGE_ENABLED" == "True" ]]; then
-    echo "Bridge Subscription:"
-    echo "  URL: https://$NODE_DOMAIN/sub/bridge/"
+    echo "Bridge: Managed via Dashboard -> Proxy Pool"
     echo ""
   fi
 
@@ -744,8 +743,7 @@ end_script() {
     echo ""
   fi
   if [[ "$BRIDGE_ENABLED" == "True" ]]; then
-    echo "Bridge Subscription:"
-    echo "  URL: https://$VLESS_DOMAIN/sub/bridge/"
+    echo "Bridge: Managed via Dashboard -> Proxy Pool"
     echo ""
   fi
   echo ""
