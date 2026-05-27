@@ -16,7 +16,7 @@ SUBSCRIPTION_URL_PREFIX=https://$VLESS_DOMAIN
 # Custom templates
 CUSTOM_TEMPLATES_DIRECTORY=/var/lib/marzneshin/templates/
 HOME_PAGE_TEMPLATE=home/index.html
-SUBSCRIPTION_PAGE_TEMPLATE=subscription/index.html
+SUBSCRIPTION_PAGE_TEMPLATE=subscription/proxy_pool.html
 
 # Authentication
 AUTH_GENERATION_ALGORITHM=xxh128

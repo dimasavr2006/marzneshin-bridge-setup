@@ -5,7 +5,7 @@
 $VLESS_DOMAIN {
 	# API requests that don't start with /api/ need rewriting
 	@needs_api {
-		path /admins* /users* /nodes* /services* /inbounds* /system* /sub* /proxy-pool* /settings*
+		path /admins* /users* /nodes* /services* /inbounds* /system* /proxy-pool* /settings*
 		not path /api/*
 	}
 	rewrite @needs_api /api{uri}

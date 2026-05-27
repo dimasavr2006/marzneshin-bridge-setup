@@ -148,7 +148,7 @@
         // Update UI
         document.getElementById('domain').textContent = domain;
         document.getElementById('subUrl').textContent = currentUrl;
-        document.getElementById('bridgeBtn').href = '/sub/bridge/';
+        document.getElementById('bridgeBtn').href = currentUrl.replace(/\/$/, '') + '/html';
         
         function copySubUrl() {
             navigator.clipboard.writeText(currentUrl).then(() => {

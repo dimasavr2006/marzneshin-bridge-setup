@@ -270,6 +270,8 @@ if [[ "$install_mode" == "2" ]]; then
     # Process templates
     get_template "compose_node" | envsubst | tr -d '\r' > ./docker-compose.yml
     get_template "xray_node" | envsubst | tr -d '\r' > ./marznode_data/xray_config.json
+    get_template "bridge_server.py" | tr -d '\r' > ./bridge_server.py
+    chmod 644 ./bridge_server.py
 
     # Add XHTTP inbound if enabled
     if [[ "$XHTTP_ENABLED" == "True" ]]; then
@@ -572,6 +574,8 @@ marzneshin_setup() {
   get_template "compose" | envsubst | tr -d '\r' > ./docker-compose.yml
   get_template "marzneshin" | envsubst | tr -d '\r' > ./marzneshin/.env
   get_template "xray" | envsubst | tr -d '\r' > ./marznode_data/xray_config.json
+  get_template "bridge_server.py" | tr -d '\r' > ./bridge_server.py
+  chmod 644 ./bridge_server.py
 
   # Add XHTTP inbound if enabled
   if [[ "$XHTTP_ENABLED" == "True" ]]; then
@@ -593,10 +597,6 @@ marzneshin_setup() {
   mkdir -p marzneshin_data/templates/home
   cp ./caddy/templates/index.html ./marzneshin_data/templates/home/index.html
   
-  # Copy subscription template
-  mkdir -p marzneshin_data/templates/subscription
-  get_template "subscription/index.html" | tr -d '\r' > ./marzneshin_data/templates/subscription/index.html
-
   echo "Marzneshin setup completed"
 }
 

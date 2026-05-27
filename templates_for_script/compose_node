@@ -41,6 +41,8 @@ services:
     container_name: bridge-server
     restart: always
     network_mode: host
+    environment:
+      - BRIDGE_LINK=$BRIDGE_LINK
     volumes:
       - ./subscriptions:/opt/marznode/subscriptions:ro
       - ./bridge_server.py:/app/bridge_server.py:ro
