@@ -28,10 +28,12 @@ echo ""
 remove_docker="n"
 reset_ufw="n"
 remove_images="n"
+remove_legacy_data="n"
 
 # Detect installation type
 FULL_INSTALL=false
 NODE_INSTALL=false
+LEGACY_STACK=false
 
 if [ -d "/opt/marzneshin-vps-setup" ]; then
   FULL_INSTALL=true
@@ -43,11 +45,17 @@ if [ -d "/opt/marznode" ]; then
   echo_info "Detected: Node-only installation"
 fi
 
-if [ "$FULL_INSTALL" = false ] && [ "$NODE_INSTALL" = false ]; then
+if [ -f "/etc/opt/marzneshin/docker-compose.yml" ]; then
+  LEGACY_STACK=true
+  echo_info "Detected: Legacy Marzneshin compose stack (/etc/opt/marzneshin)"
+fi
+
+if [ "$FULL_INSTALL" = false ] && [ "$NODE_INSTALL" = false ] && [ "$LEGACY_STACK" = false ]; then
   echo_warn "No Marzneshin installation detected."
   echo "Expected directories:"
   echo "  - /opt/marzneshin-vps-setup (full installation)"
   echo "  - /opt/marznode (node-only installation)"
+  echo "  - /etc/opt/marzneshin (legacy compose stack)"
   read -ep "Continue anyway to clean up other components? [y/N]: " continue_anyway
   if [[ ! "${continue_anyway,,}" == "y" ]]; then
     exit 0
@@ -87,6 +95,10 @@ if command -v docker &> /dev/null; then
     fi
   fi
 
+  if [ "$LEGACY_STACK" = true ]; then
+    docker compose -f /etc/opt/marzneshin/docker-compose.yml down --volumes --remove-orphans 2>/dev/null || true
+  fi
+
   read -ep "Also remove Marzneshin-related Docker images? [y/N]: " remove_images
   if [[ "${remove_images,,}" == "y" ]]; then
     echo_info "Removing known Marzneshin images..."
@@ -97,6 +109,7 @@ if command -v docker &> /dev/null; then
     docker rmi caddy:2.9 2>/dev/null || true
     docker rmi caddy:latest 2>/dev/null || true
     docker rmi python:3.11-slim 2>/dev/null || true
+    docker rmi marzneshin-marzneshin 2>/dev/null || true
   else
     echo_info "Docker images kept."
   fi
@@ -118,6 +131,20 @@ fi
 if [ -d "/opt/marznode" ]; then
   rm -rf /opt/marznode
   echo_info "Removed /opt/marznode"
+fi
+
+if [ -d "/etc/opt/marzneshin" ]; then
+  rm -rf /etc/opt/marzneshin
+  echo_info "Removed /etc/opt/marzneshin"
+fi
+
+if [ "$LEGACY_STACK" = true ]; then
+  read -ep "Remove legacy runtime data dirs (/var/lib/marzneshin, /var/lib/marznode)? [y/N]: " remove_legacy_data
+  if [[ "${remove_legacy_data,,}" == "y" ]]; then
+    rm -rf /var/lib/marzneshin
+    rm -rf /var/lib/marznode
+    echo_info "Removed /var/lib/marzneshin and /var/lib/marznode"
+  fi
 fi
 
 #####################################
@@ -177,8 +204,10 @@ echo ""
 echo "Removed components:"
 [ "$FULL_INSTALL" = true ] && echo "  - Marzneshin panel installation"
 [ "$NODE_INSTALL" = true ] && echo "  - Marznode installation"
+[ "$LEGACY_STACK" = true ] && echo "  - Legacy compose stack (/etc/opt/marzneshin)"
 echo "  - Docker containers from detected Marzneshin compose stacks"
 [[ "${remove_images,,}" == "y" ]] && echo "  - Marzneshin Docker images"
+[[ "${remove_legacy_data,,}" == "y" ]] && echo "  - Legacy runtime data dirs in /var/lib"
 [[ "${remove_docker,,}" == "y" ]] && echo "  - Docker"
 [[ "${reset_ufw,,}" == "y" ]] && echo "  - UFW rules (reset)"
 echo ""
