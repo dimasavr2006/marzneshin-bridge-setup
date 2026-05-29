@@ -24,6 +24,10 @@ echo "       Marzneshin Bridge VPS Uninstall Script"
 echo "=============================================="
 echo ""
 
+# Defaults for summary
+remove_docker="n"
+reset_ufw="n"
+
 # Detect installation type
 FULL_INSTALL=false
 NODE_INSTALL=false
@@ -51,7 +55,7 @@ fi
 
 echo ""
 echo "This script will remove:"
-echo "  - Docker containers (marzneshin, marznode, caddy)"
+echo "  - Docker containers (marzneshin, marznode, caddy, bridge-server)"
 echo "  - Installation directories and all data"
 echo "  - UFW rules added by installer"
 echo ""
@@ -67,33 +71,41 @@ fi
 # Stop and remove Docker containers
 #####################################
 echo ""
-echo_info "Stopping Docker containers..."
+if command -v docker &> /dev/null; then
+  echo_info "Stopping Docker containers..."
 
-if [ "$FULL_INSTALL" = true ]; then
-  if [ -f "/opt/marzneshin-vps-setup/docker-compose.yml" ]; then
-    docker compose -f /opt/marzneshin-vps-setup/docker-compose.yml down --volumes --remove-orphans 2>/dev/null || true
+  if [ "$FULL_INSTALL" = true ]; then
+    if [ -f "/opt/marzneshin-vps-setup/docker-compose.yml" ]; then
+      docker compose -f /opt/marzneshin-vps-setup/docker-compose.yml down --volumes --remove-orphans 2>/dev/null || true
+    fi
   fi
+
+  if [ "$NODE_INSTALL" = true ]; then
+    if [ -f "/opt/marznode/docker-compose.yml" ]; then
+      docker compose -f /opt/marznode/docker-compose.yml down --volumes --remove-orphans 2>/dev/null || true
+    fi
+  fi
+
+  # Remove containers by name if they still exist
+  for container in marzneshin marznode caddy bridge-server; do
+    if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
+      echo_info "Removing container: $container"
+      docker rm -f "$container" 2>/dev/null || true
+    fi
+  done
+
+  # Remove known images used by setup (new + legacy)
+  echo_info "Removing Docker images..."
+  docker rmi dimasavr/marzneshin-aggregator:main 2>/dev/null || true
+  docker rmi dimasavr/marzneshin-aggregator:latest 2>/dev/null || true
+  docker rmi dawsh/marzneshin:latest 2>/dev/null || true
+  docker rmi dawsh/marznode:latest 2>/dev/null || true
+  docker rmi caddy:2.9 2>/dev/null || true
+  docker rmi caddy:latest 2>/dev/null || true
+  docker rmi python:3.11-slim 2>/dev/null || true
+else
+  echo_warn "Docker is not installed, skipping container/image cleanup."
 fi
-
-if [ "$NODE_INSTALL" = true ]; then
-  if [ -f "/opt/marznode/docker-compose.yml" ]; then
-    docker compose -f /opt/marznode/docker-compose.yml down --volumes --remove-orphans 2>/dev/null || true
-  fi
-fi
-
-# Remove containers by name if they still exist
-for container in marzneshin marznode caddy; do
-  if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
-    echo_info "Removing container: $container"
-    docker rm -f "$container" 2>/dev/null || true
-  fi
-done
-
-# Remove Docker images
-echo_info "Removing Docker images..."
-docker rmi dawsh/marzneshin:latest 2>/dev/null || true
-docker rmi dawsh/marznode:latest 2>/dev/null || true
-docker rmi caddy:latest 2>/dev/null || true
 
 #####################################
 # Remove installation directories
@@ -101,12 +113,12 @@ docker rmi caddy:latest 2>/dev/null || true
 echo ""
 echo_info "Removing installation directories..."
 
-if [ "$FULL_INSTALL" = true ] && [ -d "/opt/marzneshin-vps-setup" ]; then
+if [ -d "/opt/marzneshin-vps-setup" ]; then
   rm -rf /opt/marzneshin-vps-setup
   echo_info "Removed /opt/marzneshin-vps-setup"
 fi
 
-if [ "$NODE_INSTALL" = true ] && [ -d "/opt/marznode" ]; then
+if [ -d "/opt/marznode" ]; then
   rm -rf /opt/marznode
   echo_info "Removed /opt/marznode"
 fi
@@ -138,7 +150,7 @@ if [[ "${remove_docker,,}" == "y" ]]; then
   systemctl stop docker.socket 2>/dev/null || true
 
   # Remove Docker packages
-  apt remove --purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin 2>/dev/null || true
+  apt remove --purge -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-rootless-extras docker-compose 2>/dev/null || true
   apt autoremove -y 2>/dev/null || true
 
   # Remove Docker data
@@ -147,6 +159,7 @@ if [[ "${remove_docker,,}" == "y" ]]; then
   rm -rf /etc/docker
   rm -f /etc/apt/sources.list.d/docker.list
   rm -f /etc/apt/keyrings/docker.gpg
+  rm -f /etc/apt/keyrings/docker.asc
 
   echo_info "Docker removed"
 else

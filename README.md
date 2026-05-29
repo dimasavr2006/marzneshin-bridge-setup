@@ -150,7 +150,14 @@ docker compose -f /opt/marzneshin-vps-setup/docker-compose.yml down
 ## Uninstall
 
 ```bash
-bash <(wget -qO- https://raw.githubusercontent.com/dimasavr2006/marzneshin-bridge-setup/main/uninstall.sh)
+bash <(wget -qO- https://raw.githubusercontent.com/dimasavr2006/marzneshin-bridge-setup/master/uninstall.sh)
+```
+
+## Reinstall (clean)
+
+```bash
+bash <(wget -qO- https://raw.githubusercontent.com/dimasavr2006/marzneshin-bridge-setup/master/uninstall.sh)
+bash <(wget -qO- https://raw.githubusercontent.com/dimasavr2006/marzneshin-bridge-setup/master/vps-setup.sh)
 ```
 
 ## File Structure
