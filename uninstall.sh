@@ -12,6 +12,34 @@ echo_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
 echo_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 echo_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 
+# Remove container only if it is clearly related to Marzneshin paths/labels.
+remove_if_marz_related() {
+  local container_name="$1"
+  local mounts
+  local labels
+
+  if ! docker ps -a --format '{{.Names}}' | grep -qx "$container_name"; then
+    return 0
+  fi
+
+  mounts="$(docker inspect -f '{{range .Mounts}}{{println .Source}}{{end}}' "$container_name" 2>/dev/null || true)"
+  labels="$(docker inspect -f '{{json .Config.Labels}}' "$container_name" 2>/dev/null || true)"
+
+  if echo "$mounts" | grep -Eq '^/opt/marzneshin-vps-setup/|^/opt/marznode/|^/etc/opt/marzneshin/|^/var/lib/marzneshin|^/var/lib/marznode'; then
+    echo_info "Removing leftover container: $container_name"
+    docker rm -f "$container_name" 2>/dev/null || true
+    return 0
+  fi
+
+  if echo "$labels" | grep -q '"com.docker.compose.project":"marzneshin"'; then
+    echo_info "Removing leftover container: $container_name"
+    docker rm -f "$container_name" 2>/dev/null || true
+    return 0
+  fi
+
+  echo_warn "Skipping container '$container_name' (not clearly related to Marzneshin)."
+}
+
 # Check if script is run as root
 if [ "$EUID" -ne 0 ]; then
   echo_error "Please run as root"
@@ -98,6 +126,15 @@ if command -v docker &> /dev/null; then
   if [ "$LEGACY_STACK" = true ]; then
     docker compose -f /etc/opt/marzneshin/docker-compose.yml down --volumes --remove-orphans 2>/dev/null || true
   fi
+
+  # Safety fallback: remove leftovers from marzneshin compose project
+  while IFS= read -r leftover; do
+    [ -n "$leftover" ] && docker rm -f "$leftover" 2>/dev/null || true
+  done < <(docker ps -a --filter label=com.docker.compose.project=marzneshin --format '{{.Names}}')
+
+  # Explicitly handle standalone caddy/bridge-server leftovers if mounted from marz paths
+  remove_if_marz_related "caddy"
+  remove_if_marz_related "bridge-server"
 
   read -ep "Also remove Marzneshin-related Docker images? [y/N]: " remove_images
   if [[ "${remove_images,,}" == "y" ]]; then
