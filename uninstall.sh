@@ -27,6 +27,7 @@ echo ""
 # Defaults for summary
 remove_docker="n"
 reset_ufw="n"
+remove_images="n"
 
 # Detect installation type
 FULL_INSTALL=false
@@ -55,9 +56,9 @@ fi
 
 echo ""
 echo "This script will remove:"
-echo "  - Docker containers (marzneshin, marznode, caddy, bridge-server)"
-echo "  - Installation directories and all data"
-echo "  - UFW rules added by installer"
+echo "  - Docker compose stacks from this setup only (/opt/marzneshin-vps-setup, /opt/marznode)"
+echo "  - Installation directories and all panel data"
+echo "  - Optional cleanup (images/UFW/Docker) only if you confirm it"
 echo ""
 echo -e "${RED}WARNING: This will delete all VPN user data and configurations!${NC}"
 echo ""
@@ -86,23 +87,19 @@ if command -v docker &> /dev/null; then
     fi
   fi
 
-  # Remove containers by name if they still exist
-  for container in marzneshin marznode caddy bridge-server; do
-    if docker ps -a --format '{{.Names}}' | grep -q "^${container}$"; then
-      echo_info "Removing container: $container"
-      docker rm -f "$container" 2>/dev/null || true
-    fi
-  done
-
-  # Remove known images used by setup (new + legacy)
-  echo_info "Removing Docker images..."
-  docker rmi dimasavr/marzneshin-aggregator:main 2>/dev/null || true
-  docker rmi dimasavr/marzneshin-aggregator:latest 2>/dev/null || true
-  docker rmi dawsh/marzneshin:latest 2>/dev/null || true
-  docker rmi dawsh/marznode:latest 2>/dev/null || true
-  docker rmi caddy:2.9 2>/dev/null || true
-  docker rmi caddy:latest 2>/dev/null || true
-  docker rmi python:3.11-slim 2>/dev/null || true
+  read -ep "Also remove Marzneshin-related Docker images? [y/N]: " remove_images
+  if [[ "${remove_images,,}" == "y" ]]; then
+    echo_info "Removing known Marzneshin images..."
+    docker rmi dimasavr/marzneshin-aggregator:main 2>/dev/null || true
+    docker rmi dimasavr/marzneshin-aggregator:latest 2>/dev/null || true
+    docker rmi dawsh/marzneshin:latest 2>/dev/null || true
+    docker rmi dawsh/marznode:latest 2>/dev/null || true
+    docker rmi caddy:2.9 2>/dev/null || true
+    docker rmi caddy:latest 2>/dev/null || true
+    docker rmi python:3.11-slim 2>/dev/null || true
+  else
+    echo_info "Docker images kept."
+  fi
 else
   echo_warn "Docker is not installed, skipping container/image cleanup."
 fi
@@ -170,8 +167,7 @@ fi
 # Cleanup
 #####################################
 echo ""
-echo_info "Running apt cleanup..."
-apt autoremove -y 2>/dev/null || true
+echo_info "System package cleanup skipped."
 
 echo ""
 echo "=============================================="
@@ -181,7 +177,8 @@ echo ""
 echo "Removed components:"
 [ "$FULL_INSTALL" = true ] && echo "  - Marzneshin panel installation"
 [ "$NODE_INSTALL" = true ] && echo "  - Marznode installation"
-echo "  - Docker containers and images"
+echo "  - Docker containers from detected Marzneshin compose stacks"
+[[ "${remove_images,,}" == "y" ]] && echo "  - Marzneshin Docker images"
 [[ "${remove_docker,,}" == "y" ]] && echo "  - Docker"
 [[ "${reset_ufw,,}" == "y" ]] && echo "  - UFW rules (reset)"
 echo ""
